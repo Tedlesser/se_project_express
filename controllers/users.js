@@ -1,13 +1,12 @@
-const User = require("../models/user")
-
-// GET /users 
+const User = require("../models/user");
+const { ERROR_CODES, ERROR_MESSAGES } = require("../utils/errors"); 
 
 const getUsers = (req, res) => {
     User.find({})
       .then((users) => res.status(200).send(users))
       .catch((err) => { 
         console.error(err)
-        return res.status(500).send({message: err.message })
+        return res.status( ERROR_CODES.SERVER_ERROR).send({message: ERROR_MESSAGES.SERVER_ERROR })
       });
 }
 
@@ -19,26 +18,29 @@ const createUser = (req, res) => {
    .catch((err) =>{
       console.error(err)
       if (err.name === "ValidationError") {
-        return res.status(400).send({message: err.message})
+        return res.status( ERROR_CODES.BAD_REQUEST).send({message: ERROR_MESSAGES.BAD_REQUEST})
       } 
-      return res.status(500).send({message: err.message })
+      return res.status( ERROR_CODES.SERVER_ERROR).send({message: ERROR_MESSAGES.SERVER_ERROR })
    })
 };
 
 const getUserById = (req, res) => {
-    const { userId } = req.params.id; 
+    const { userId } = req.params;
     User.findById(userId)
-    .then((user) => res.status(201).send(user))
     .orFail()
+    .then((user) => res.status(200).send(user))  
     .catch((err) => {
-        console.error(err); 
-        if (err.name === "CastError"){
-            return res.status(400).send({message: "Invalid user ID format."})
-        } if (err.name === "DocumentNotFoundError") {
-            return res.status(404).send({message: "Address not found."})
+        console.error(err);
+        if (err.name === "CastError") {
+            return res.status(ERROR_CODES.BAD_REQUEST).send({message: ERROR_MESSAGES.BAD_REQUEST});
         } 
-        return res.status(500).send({message: err.message })
+        if (err.name === "DocumentNotFoundError") {
+            return res.status(ERROR_CODES.NOT_FOUND).send({message: ERROR_MESSAGES.NOT_FOUND});
+        }
+        return res.status(ERROR_CODES.SERVER_ERROR).send({message: ERROR_MESSAGES.SERVER_ERROR});
     });
-}
+};
+
+
 
 module.exports = { getUsers, createUser, getUserById };
