@@ -21,7 +21,7 @@ const deleteItem = (req, res) => {
   clothingItem
     .findByIdAndDelete(itemId)
     .orFail()
-    .then((items) => {
+    .then((item) => {
       res.status(204).send({});
     })
     .catch((err) => {
@@ -44,7 +44,6 @@ const deleteItem = (req, res) => {
 
 const addItem = (req, res) => {
   const { name, weather, imageUrl } = req.body;
-  console.log(req.user_id);
   const owner = req.user._id;
 
   if (!name || !weather || !imageUrl) {
