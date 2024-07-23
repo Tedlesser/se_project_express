@@ -58,7 +58,7 @@ const addItem = (req, res) => {
       if (err.name === "ValidationError") {
         return res.status(ERROR_CODES.BAD_REQUEST).send({ message: ERROR_MESSAGES.BAD_REQUEST });
       }
-      res.status(ERROR_CODES.INTERNAL_SERVER_ERROR).send({ message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
+      res.status(ERROR_CODES.SERVER_ERROR).send({ message: ERROR_MESSAGES.SERVER_ERROR });
     });
 };
 
