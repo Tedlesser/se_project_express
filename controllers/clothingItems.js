@@ -52,19 +52,13 @@ const addItem = (req, res) => {
 
   clothingItem
     .create({ name, weather, imageUrl, owner })
-    .then((items) => {
-      res.status(201).send(items)
-    })
-    .catch((err) => {
-      console.error(err)
+    .then(items => res.status(201).send(items))
+    .catch(err => {
+      console.error(err);
       if (err.name === "ValidationError") {
-        return res
-          .status(ERROR_CODES.BAD_REQUEST)
-          .send({ message: ERROR_MESSAGES.BAD_REQUEST });
+        return res.status(ERROR_CODES.BAD_REQUEST).send({ message: ERROR_MESSAGES.BAD_REQUEST });
       }
-      return res
-        .status(ERROR_CODES.SERVER_ERROR)
-        .send({ message: ERROR_MESSAGES.SERVER_ERROR });
+      res.status(ERROR_CODES.INTERNAL_SERVER_ERROR).send({ message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
     });
 };
 
