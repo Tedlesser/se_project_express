@@ -21,9 +21,7 @@ const deleteItem = (req, res) => {
   clothingItem
     .findByIdAndDelete(itemId)
     .orFail()
-    .then((item) => {
-      res.status(204).send(item);
-    })
+    .then((item) => res.status(204).send(item))
     .catch((err) => {
       console.error(err)
       if (err.name === "DocumentNotFoundError") {
@@ -55,7 +53,7 @@ const addItem = (req, res) => {
   clothingItem
     .create({ name, weather, imageUrl, owner })
     .then((items) => {
-      return res.status(201).send(items)
+      res.status(201).send(items)
     })
     .catch((err) => {
       console.error(err)
