@@ -22,7 +22,7 @@ const deleteItem = (req, res) => {
     .findByIdAndDelete(itemId)
     .orFail()
     .then((item) => {
-      res.status(204).send({});
+      res.status(204).send(item);
     })
     .catch((err) => {
       console.error(err)
@@ -54,7 +54,8 @@ const addItem = (req, res) => {
 
   clothingItem
     .create({ name, weather, imageUrl, owner })
-    .then((items) => res.status(201).send(items))
+    .then((items) => 
+      res.status(201).send(items))
     .catch((err) => {
       console.error(err)
       if (err.name === "ValidationError") {
@@ -67,6 +68,7 @@ const addItem = (req, res) => {
         .send({ message: ERROR_MESSAGES.SERVER_ERROR });
     });
 };
+
 
 const updateItem = (req, res) => {
   const { itemId } = req.params;
