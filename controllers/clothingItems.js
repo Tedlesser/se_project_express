@@ -56,12 +56,16 @@ const addItem = (req, res) => {
     .catch(err => {
       console.error(err);
       if (err.name === "ValidationError") {
-        return res.status(ERROR_CODES.BAD_REQUEST).send({ message: ERROR_MESSAGES.BAD_REQUEST });
+        return res
+          .status(ERROR_CODES.BAD_REQUEST)
+          .send({ message: ERROR_MESSAGES.BAD_REQUEST });
+      } else {
+        return res
+          .status(ERROR_CODES.SERVER_ERROR)
+          .send({ message: ERROR_MESSAGES.SERVER_ERROR });
       }
-      res.status(ERROR_CODES.SERVER_ERROR).send({ message: ERROR_MESSAGES.SERVER_ERROR });
     });
 };
-
 
 const updateItem = (req, res) => {
   const { itemId } = req.params;
