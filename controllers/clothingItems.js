@@ -54,7 +54,6 @@ const addItem = (req, res) => {
     .create({ name, weather, imageUrl, owner })
     .then((items) => res.status(201).send(items))
     .catch((err) => {
-      console.error(err);
       if (err.name === "ValidationError") {
         return res
           .status(ERROR_CODES.BAD_REQUEST)
