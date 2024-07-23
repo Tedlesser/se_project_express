@@ -8,10 +8,10 @@ const getItems = (req, res) => {
       res.send(items);
     })
     .catch((err) => {
-      console.error(err)  
+      console.error(err);
       res
         .status(ERROR_CODES.SERVER_ERROR)
-        .send({ message: ERROR_MESSAGES.SERVER_ERROR })
+        .send({ message: ERROR_MESSAGES.SERVER_ERROR });
     });
 };
 
@@ -23,7 +23,7 @@ const deleteItem = (req, res) => {
     .orFail()
     .then((item) => res.status(204).send(item))
     .catch((err) => {
-      console.error(err)
+      console.error(err);
       if (err.name === "DocumentNotFoundError") {
         return res
           .status(ERROR_CODES.NOT_FOUND)
@@ -52,18 +52,17 @@ const addItem = (req, res) => {
 
   clothingItem
     .create({ name, weather, imageUrl, owner })
-    .then(items => res.status(201).send(items))
-    .catch(err => {
+    .then((items) => res.status(201).send(items))
+    .catch((err) => {
       console.error(err);
       if (err.name === "ValidationError") {
         return res
           .status(ERROR_CODES.BAD_REQUEST)
           .send({ message: ERROR_MESSAGES.BAD_REQUEST });
-      } else {
-        return res
-          .status(ERROR_CODES.SERVER_ERROR)
-          .send({ message: ERROR_MESSAGES.SERVER_ERROR });
       }
+      return res
+        .status(ERROR_CODES.SERVER_ERROR)
+        .send({ message: ERROR_MESSAGES.SERVER_ERROR });
     });
 };
 
@@ -76,63 +75,70 @@ const updateItem = (req, res) => {
     .orFail()
     .then((item) => res.status(200).send({ data: item }))
     .catch((err) => {
-      console.error(err)  
+      console.error(err);
       res
         .status(ERROR_CODES.SERVER_ERROR)
-        .send({ message: ERROR_MESSAGES.SERVER_ERROR })
+        .send({ message: ERROR_MESSAGES.SERVER_ERROR });
     });
 };
 
 const likeItem = (req, res) => {
   clothingItem
     .findByIdAndUpdate(
-      req.params.itemId, 
+      req.params.itemId,
       { $addToSet: { likes: req.user._id } }, // add _id to the array if it's not there yet
-      { new: true },
+      { new: true }
     )
     .orFail()
     .then((item) => res.json(item))
     .catch((err) => {
-      console.error(err)
-      if(err.name === "DocumentNotFoundError")
-        return res 
+      console.error(err);
+      if (err.name === "DocumentNotFoundError")
+        return res
           .status(ERROR_CODES.NOT_FOUND)
-          .json({message: ERROR_MESSAGES.NOT_FOUND})
+          .json({ message: ERROR_MESSAGES.NOT_FOUND });
       if (err.name === "CastError") {
         return res
           .status(ERROR_CODES.BAD_REQUEST)
           .send({ message: ERROR_MESSAGES.BAD_REQUEST });
-    }
+      }
       return res
         .status(ERROR_CODES.SERVER_ERROR)
         .json({ message: ERROR_MESSAGES.SERVER_ERROR });
-  });
+    });
 };
 
-const dislikeItem = (req, res) => { 
+const dislikeItem = (req, res) => {
   clothingItem
-    .findByIdAndUpdate (
-      req.params.itemId, 
-      {$pull: {likes: req.user._id}},// remove _id from the array
-      { new: true },
+    .findByIdAndUpdate(
+      req.params.itemId,
+      { $pull: { likes: req.user._id } }, // remove _id from the array
+      { new: true }
     )
     .orFail()
     .then((item) => res.send(item))
     .catch((err) => {
-      console.error(err)
-      if(err.name === "DocumentNotFoundError")
-        return res 
+      console.error(err);
+      if (err.name === "DocumentNotFoundError")
+        return res
           .status(ERROR_CODES.NOT_FOUND)
-          .json({message: ERROR_MESSAGES.NOT_FOUND});
+          .json({ message: ERROR_MESSAGES.NOT_FOUND });
       if (err.name === "CastError") {
-      return res
-        .status(ERROR_CODES.BAD_REQUEST)
-        .send({ message: ERROR_MESSAGES.BAD_REQUEST });
+        return res
+          .status(ERROR_CODES.BAD_REQUEST)
+          .send({ message: ERROR_MESSAGES.BAD_REQUEST });
       }
       return res
         .status(ERROR_CODES.SERVER_ERROR)
         .send({ message: ERROR_MESSAGES.SERVER_ERROR });
     });
-  }
+};
 
-module.exports = { getItems, deleteItem, addItem, updateItem, likeItem, dislikeItem };
+module.exports = {
+  getItems,
+  deleteItem,
+  addItem,
+  updateItem,
+  likeItem,
+  dislikeItem,
+};
