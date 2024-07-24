@@ -50,7 +50,7 @@ const addItem = (req, res) => {
       .send({ message: ERROR_MESSAGES.BAD_REQUEST });
   }
 
-  clothingItem
+  return clothingItem
     .create({ name, weather, imageUrl, owner })
     .then((item) => res.status(201).send(item))
     .catch((err) => {
