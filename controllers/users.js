@@ -1,6 +1,7 @@
 const User = require("../models/user");
 const { ERROR_CODES, ERROR_MESSAGES } = require("../utils/errors");
 const { JWT_SECRET } = require("../utils/config");
+const bcrypt = require("bcrypt");
 
 const getUsers = (req, res) => {
   User.find({})
@@ -23,7 +24,7 @@ const createUser = async (req, res) => {
     if (existingUser) {
       return res
         .status(ERROR_CODES.EMAIL_EXISTS)
-        .send({ message: ERROR_MESSAGES.EMAIL_EXISTS });
+        .send({ message: `${ERROR_MESSAGES.EMAIL_EXISTS}` });
     }
 
     // Hash the password

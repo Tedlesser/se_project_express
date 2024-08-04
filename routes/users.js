@@ -3,5 +3,6 @@ const { getUsers, createUser, getUserById, login, getCurrentUser } = require("..
 
 router.get("/:userId", getUserById);
 router.post("/signin", login);
+router.get('/users', getUsers);
 
 module.exports = router; 
