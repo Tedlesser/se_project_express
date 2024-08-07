@@ -2,6 +2,8 @@ const User = require("../models/user");
 const { ERROR_CODES, ERROR_MESSAGES } = require("../utils/errors");
 const { JWT_SECRET } = require("../utils/config");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const validator = require("validator");
 
 const getUsers = (req, res) => {
   User.find({})
@@ -23,8 +25,8 @@ const createUser = async (req, res) => {
 
     if (existingUser) {
       return res
-        .status(ERROR_CODES.EMAIL_EXISTS)
-        .send({ message: `${ERROR_MESSAGES.EMAIL_EXISTS}` });
+        .status(ERROR_CODES.AUTHORIZATION_ERROR)
+        .send({ message: `${ERROR_MESSAGES.AUTHORIZATION_ERROR}` });
     }
 
     // Hash the password
@@ -46,11 +48,13 @@ const createUser = async (req, res) => {
         .status(ERROR_CODES.BAD_REQUEST)
         .send({ message: ERROR_MESSAGES.BAD_REQUEST });
     }
+    // Handle MondoDB duplicate error
     if (err.code === 11000) {
       return res
-        .status(ERROR_CODES.EMAIL_EXISTS)
-        .send({ message: ERROR_MESSAGES.EMAIL_EXISTS });
+        .status(ERROR_CODES.BAD_REQUEST)
+        .send({ message: ERROR_MESSAGES.BAD_REQUEST });
     }
+    // Handle server error
     return res
       .status(ERROR_CODES.SERVER_ERROR)
       .send({ message: ERROR_MESSAGES.SERVER_ERROR });
@@ -63,7 +67,7 @@ const getUserById = (req, res) => {
     .orFail()
     .then((user) => res.status(200).send(user))
     .catch((err) => {
-      console.error(err);
+      console.log(err);
       if (err.name === "CastError") {
         return res
           .status(ERROR_CODES.BAD_REQUEST)
@@ -80,28 +84,66 @@ const getUserById = (req, res) => {
     });
 };
 
-const login = (req, res) => {
+const login = async (req, res) => {
   const { email, password } = req.body;
 
-  // Find the user by email and password
-  User.findUserByCredentials(email, password)
-    .select("+password")
+  if (!email || !password) {
+    return res
+      .status(ERROR_CODES.BAD_REQUEST)
+      .send({ message: ERROR_MESSAGES.BAD_REQUEST });
+  }
+  
+  if (!validator.isEmail(email)) {
+    return res
+      .status(ERROR_CODES.BAD_REQUEST)
+      .send({ message: "Invalid email format" });
+  }
+
+  try {
+    const user = await User.findUserByCredentials(email, password);
+    const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET || "dev-secret", {
+      expiresIn: "7d",
+    });
+    res.status(200).send({ token });
+  } catch (err) {
+    console.error(err);
+    // console.error(`Error during login: ${err.message}`);
+    if (err.message === "Incorrect email or password") {
+      return res
+        .status(ERROR_CODES.AUTHORIZATION_ERROR)
+        .send({ message: ERROR_MESSAGES.AUTHORIZATION_ERROR });
+    }
+    res
+      .status(ERROR_CODES.SERVER_ERROR)
+      .send({ message: ERROR_MESSAGES.SERVER_ERROR });
+  }
+};
+
+const updateUser = (req, res) => {
+  const userId = req.user._id;
+  const { name, avatar } = req.body;
+
+  const updates = {};
+  if (name) updates.name = name;
+  if (avatar) updates.avatar = avatar;
+
+  User.findByIdAndUpdate(userId, updates, { new: true, runValidators: true })
     .then((user) => {
       if (!user) {
-        return res.status(401).send({ message: "Invalid email or password" });
+        return res
+          .status(ERROR_CODES.NOT_FOUND)
+          .send({ message: ERROR_MESSAGES.NOT_FOUND });
       }
-
-      // Generate JWT
-      const token = jwt.sign({ _id: user._id }, JWT_SECRET, {
-        expiresIn: "7d",
-      });
-
-      // Send token to client
-      res.status(200).send({ token });
+      return res.send(user);
     })
     .catch((err) => {
-      console.error(err.name);
-      res
+      if (err.name === "ValidationError") {
+        return res.status(ERROR_CODES.BAD_REQUEST).json({
+          message: "Validation Error",
+          errors: err.errors,
+        });
+      }
+      return res
         .status(ERROR_CODES.SERVER_ERROR)
         .send({ message: ERROR_MESSAGES.SERVER_ERROR });
     });
@@ -112,4 +154,4 @@ const getCurrentUser = (req, res) => {
   return (currentUser = req._id);
 };
 
-module.exports = { getUsers, createUser, getUserById, login, getCurrentUser };
+module.exports = { getUsers, createUser, getUserById, login, getCurrentUser, updateUser };
