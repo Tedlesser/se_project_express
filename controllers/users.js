@@ -19,14 +19,20 @@ const getUsers = (req, res) => {
 const createUser = async (req, res) => {
   const { name, avatar, email, password } = req.body;
 
+  if (!email || !password) {
+    return res
+      .status(ERROR_CODES.BAD_REQUEST)
+      .send({ message: ERROR_MESSAGES.BAD_REQUEST });
+  }
+
   try {
     // Check for existing user via email
     const existingUser = await User.findOne({ email });
 
     if (existingUser) {
       return res
-        .status(ERROR_CODES.AUTHORIZATION_ERROR)
-        .send({ message: `${ERROR_MESSAGES.AUTHORIZATION_ERROR}` });
+        .status(ERROR_CODES.EMAIL_EXISTS)
+        .send({ message: `${ERROR_MESSAGES.EMAIL_EXISTS}` });
     }
 
     // Hash the password
@@ -40,7 +46,7 @@ const createUser = async (req, res) => {
       password: hashPassword,
     });
 
-    return res.status(201).send(newUser);
+    return res.status(201).send({name, avatar, email})
   } catch (err) {
     console.error(err);
     if (err.name === "ValidationError") {
