@@ -5,24 +5,21 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const validator = require("validator");
 
-const getUsers = (req, res) => {
-  User.find({})
-    .then((users) => res.status(200).send(users))
-    .catch((err) => {
-      console.error(err);
-      return res
-        .status(ERROR_CODES.SERVER_ERROR)
-        .send({ message: ERROR_MESSAGES.SERVER_ERROR });
-    });
-};
-
 const createUser = async (req, res) => {
   const { name, avatar, email, password } = req.body;
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   if (!email || !password) {
     return res
       .status(ERROR_CODES.BAD_REQUEST)
       .send({ message: ERROR_MESSAGES.BAD_REQUEST });
+  }
+
+  if (!emailRegex.test(email)) {
+    return res
+      .status(ERROR_CODES.BAD_REQUEST)
+      .send({ message: "Invalid email format" });
   }
 
   try {
@@ -45,7 +42,7 @@ const createUser = async (req, res) => {
       email,
       password: hashPassword,
     });
-
+    console.log(newUser)
     return res.status(201).send({name, avatar, email})
   } catch (err) {
     console.error(err);
@@ -67,13 +64,19 @@ const createUser = async (req, res) => {
   }
 };
 
-const getUserById = (req, res) => {
-  const { userId } = req.params;
-  User.findById(userId)
+const getCurrentUser = (req, res) => {
+  // the id comes from req.user._id
+  console.log(req.user)
+  const userId = req.user._id
+    console.log(userId)
+    User.findById(userId)
+    .select("-password")
     .orFail()
-    .then((user) => res.status(200).send(user))
+    .then((user) => {
+    console.log(user)
+    res.status(200).send(user)})
     .catch((err) => {
-      console.log(err);
+      console.log(err)
       if (err.name === "CastError") {
         return res
           .status(ERROR_CODES.BAD_REQUEST)
@@ -91,6 +94,7 @@ const getUserById = (req, res) => {
 };
 
 const login = async (req, res) => {
+  console.log(JWT_SECRET)
   const { email, password } = req.body;
 
   if (!email || !password) {
@@ -107,9 +111,11 @@ const login = async (req, res) => {
 
   try {
     const user = await User.findUserByCredentials(email, password);
-    const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET || "dev-secret", {
+    const token = jwt.sign({ _id: user._id }, JWT_SECRET, {
       expiresIn: "7d",
     });
+    console.log(user)
+    console.log(token)
     res.status(200).send({ token });
   } catch (err) {
     console.error(err);
@@ -136,28 +142,31 @@ const updateUser = (req, res) => {
   User.findByIdAndUpdate(userId, updates, { new: true, runValidators: true })
     .then((user) => {
       if (!user) {
-        return res
-          .status(ERROR_CODES.NOT_FOUND)
-          .send({ message: ERROR_MESSAGES.NOT_FOUND });
+        return res.status(ERROR_CODES.NOT_FOUND).json({
+          status: 'error',
+          message: ERROR_MESSAGES.NOT_FOUND,
+        });
       }
-      return res.send(user);
+      return res.status(200).json({
+        status: 'success',
+        data: {
+          user,
+        },
+      });
     })
     .catch((err) => {
       if (err.name === "ValidationError") {
         return res.status(ERROR_CODES.BAD_REQUEST).json({
+          status: 'error',
           message: "Validation Error",
           errors: err.errors,
         });
       }
-      return res
-        .status(ERROR_CODES.SERVER_ERROR)
-        .send({ message: ERROR_MESSAGES.SERVER_ERROR });
+      return res.status(ERROR_CODES.SERVER_ERROR).json({
+        status: 'error',
+        message: ERROR_MESSAGES.SERVER_ERROR,
+      });
     });
 };
 
-const getCurrentUser = (req, res) => {
-  console.log(currentUser);
-  return (currentUser = req._id);
-};
-
-module.exports = { getUsers, createUser, getUserById, login, getCurrentUser, updateUser };
+module.exports = { createUser, login, getCurrentUser, updateUser };
