@@ -1,7 +1,8 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const userRouter = require("./routes/index");
-const authMiddleware = require('./middleware/auth');
+const authMiddleware = require("./middleware/auth");
+const cors = require("cors")
 
 const { PORT = 3001} = process.env; 
 
@@ -15,14 +16,6 @@ mongoose
 
 const app = express();
 
-// Middleware 
-app.use((req, res, next) => {
-    req.user = {
-      _id: '5d8b8592978f8bd833ca8133'// paste the _id of the test user created in the previous step
-    };
-    next();
-  });
-
 // Main router
 app.use(express.json());
 app.use("/", userRouter);
@@ -31,4 +24,4 @@ app.listen (PORT, () => {
     console.log(`server is running on port ${PORT}`);
 })
 
-
+app.use(cors())

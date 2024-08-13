@@ -42,8 +42,8 @@ const createUser = async (req, res) => {
       email,
       password: hashPassword,
     });
-    console.log(newUser)
-    return res.status(201).send({name, avatar, email})
+    console.log(newUser);
+    return res.status(201).send({ name, avatar, email });
   } catch (err) {
     console.error(err);
     if (err.name === "ValidationError") {
@@ -66,17 +66,18 @@ const createUser = async (req, res) => {
 
 const getCurrentUser = (req, res) => {
   // the id comes from req.user._id
-  console.log(req.user)
-  const userId = req.user._id
-    console.log(userId)
-    User.findById(userId)
+  console.log(req.user);
+  const userId = req.user._id;
+  console.log(userId);
+  User.findById(userId)
     .select("-password")
     .orFail()
     .then((user) => {
-    console.log(user)
-    res.status(200).send(user)})
+      console.log(user);
+      res.status(200).send(user);
+    })
     .catch((err) => {
-      console.log(err)
+      console.log(err);
       if (err.name === "CastError") {
         return res
           .status(ERROR_CODES.BAD_REQUEST)
@@ -94,7 +95,7 @@ const getCurrentUser = (req, res) => {
 };
 
 const login = async (req, res) => {
-  console.log(JWT_SECRET)
+  console.log(JWT_SECRET);
   const { email, password } = req.body;
 
   if (!email || !password) {
@@ -102,7 +103,7 @@ const login = async (req, res) => {
       .status(ERROR_CODES.BAD_REQUEST)
       .send({ message: ERROR_MESSAGES.BAD_REQUEST });
   }
-  
+
   if (!validator.isEmail(email)) {
     return res
       .status(ERROR_CODES.BAD_REQUEST)
@@ -114,11 +115,11 @@ const login = async (req, res) => {
     const token = jwt.sign({ _id: user._id }, JWT_SECRET, {
       expiresIn: "7d",
     });
-    console.log(user)
-    console.log(token)
+    console.log(user);
+    console.log(token);
     res.status(200).send({ token });
   } catch (err) {
-    console.error(err);
+    console.log(err);
     // console.error(`Error during login: ${err.message}`);
     if (err.message === "Incorrect email or password") {
       return res
@@ -143,27 +144,24 @@ const updateUser = (req, res) => {
     .then((user) => {
       if (!user) {
         return res.status(ERROR_CODES.NOT_FOUND).json({
-          status: 'error',
+          status: "error",
           message: ERROR_MESSAGES.NOT_FOUND,
         });
       }
       return res.status(200).json({
-        status: 'success',
-        data: {
-          user,
-        },
+        data: user,
       });
     })
     .catch((err) => {
       if (err.name === "ValidationError") {
         return res.status(ERROR_CODES.BAD_REQUEST).json({
-          status: 'error',
+          status: "error",
           message: "Validation Error",
           errors: err.errors,
         });
       }
       return res.status(ERROR_CODES.SERVER_ERROR).json({
-        status: 'error',
+        status: "error",
         message: ERROR_MESSAGES.SERVER_ERROR,
       });
     });
