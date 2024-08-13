@@ -66,18 +66,15 @@ const createUser = async (req, res) => {
 
 const getCurrentUser = (req, res) => {
   // the id comes from req.user._id
-  console.log(req.user);
   const userId = req.user._id;
   console.log(userId);
   User.findById(userId)
     .select("-password")
     .orFail()
     .then((user) => {
-      console.log(user);
       res.status(200).send(user);
     })
     .catch((err) => {
-      console.log(err);
       if (err.name === "CastError") {
         return res
           .status(ERROR_CODES.BAD_REQUEST)
@@ -95,7 +92,6 @@ const getCurrentUser = (req, res) => {
 };
 
 const login = async (req, res) => {
-  console.log(JWT_SECRET);
   const { email, password } = req.body;
 
   if (!email || !password) {
