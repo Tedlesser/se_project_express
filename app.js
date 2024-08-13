@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const cors = require("cors")
 const userRouter = require("./routes/index");
 
+
 const { PORT = 3001} = process.env; 
 
 // Connecting to the database

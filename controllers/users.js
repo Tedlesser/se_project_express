@@ -1,9 +1,9 @@
+const jwt = require("jsonwebtoken");
+const validator = require("validator");
+const bcrypt = require("bcrypt");
 const User = require("../models/user");
 const { ERROR_CODES, ERROR_MESSAGES } = require("../utils/errors");
 const { JWT_SECRET } = require("../utils/config");
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
-const validator = require("validator");
 
 const createUser = async (req, res) => {
   const { name, avatar, email, password } = req.body;
