@@ -131,11 +131,12 @@ const login = async (req, res) => {
 const updateUser = (req, res) => {
   const userId = req.user._id;
   const { name, avatar } = req.body;
+  console.log(userId)
 
   const updates = {};
   if (name) updates.name = name;
   if (avatar) updates.avatar = avatar;
-
+  
   User.findByIdAndUpdate(userId, updates, { new: true, runValidators: true })
     .then((user) => {
       if (!user) {
