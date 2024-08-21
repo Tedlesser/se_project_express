@@ -113,7 +113,7 @@ const login = async (req, res) => {
     });
     console.log(user);
     console.log(token);
-    res.status(200).send({ token });
+    return res.status(200).send({ token });
   } catch (err) {
     console.log(err);
     // console.error(`Error during login: ${err.message}`);
@@ -122,7 +122,7 @@ const login = async (req, res) => {
         .status(ERROR_CODES.AUTHORIZATION_ERROR)
         .send({ message: ERROR_MESSAGES.AUTHORIZATION_ERROR });
     }
-    res
+    return res
       .status(ERROR_CODES.SERVER_ERROR)
       .send({ message: ERROR_MESSAGES.SERVER_ERROR });
   }
