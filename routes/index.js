@@ -5,8 +5,8 @@ const { ERROR_CODES, ERROR_MESSAGES } = require("../utils/errors");
 const { createUser, login } = require("../controllers/users");
 const auth = require("../middleware/auth");
 
-router.use("/users", auth, userRouter);
-router.use("/items", auth, clothingItemRouter);
+router.use("/users", userRouter);
+router.use("/items", clothingItemRouter);
 router.post("/signup", createUser);
 router.post("/signin", login);
 

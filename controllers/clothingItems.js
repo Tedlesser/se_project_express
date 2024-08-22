@@ -19,9 +19,16 @@ const deleteItem = (req, res) => {
   const { itemId } = req.params;
 
   clothingItem
-    .findByIdAndDelete(itemId)
+    .findById(itemId)
     .orFail()
-    .then(() => res.status(200).send({ message: "Successfully deleted" }))
+    .then((item) => {
+      if (String(item.owner) !== req.user._id) {
+        return res 
+          .status(ERROR_CODES.FORBIDDEN)
+          .send({message: ERROR_MESSAGES.FORBIDDEN})
+      }
+      return item.deleteOne().then(()=> res.status(200).send({ message: "Successfully deleted" }));
+    })
     .catch((err) => {
       console.error(err);
       if (err.name === "DocumentNotFoundError") {

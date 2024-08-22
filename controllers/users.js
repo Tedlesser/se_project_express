@@ -28,8 +28,8 @@ const createUser = async (req, res) => {
 
     if (existingUser) {
       return res
-        .status(ERROR_CODES.EMAIL_EXISTS)
-        .send({ message: `${ERROR_MESSAGES.EMAIL_EXISTS}` });
+        .status(ERROR_CODES.DUPLICATE_EMAIL_EXISTS)
+        .send({ message: ERROR_MESSAGES.DUPLICATE_EMAIL_EXISTS });
     }
 
     // Hash the password
@@ -51,12 +51,7 @@ const createUser = async (req, res) => {
         .status(ERROR_CODES.BAD_REQUEST)
         .send({ message: ERROR_MESSAGES.BAD_REQUEST });
     }
-    // Handle MondoDB duplicate error
-    if (err.code === 11000) {
-      return res
-        .status(ERROR_CODES.BAD_REQUEST)
-        .send({ message: ERROR_MESSAGES.BAD_REQUEST });
-    }
+  
     // Handle server error
     return res
       .status(ERROR_CODES.SERVER_ERROR)
