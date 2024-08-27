@@ -62,7 +62,6 @@ const createUser = async (req, res) => {
 const getCurrentUser = (req, res) => {
   // the id comes from req.user._id
   const userId = req.user._id;
-  console.log(userId);
   User.findById(userId)
     .select("-password")
     .orFail()

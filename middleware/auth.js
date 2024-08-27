@@ -6,7 +6,6 @@ const auth = (req, res, next) => {
 
   console.log(JWT_SECRET)
   const { authorization } = req.headers;
-  console.log('Authorization:', authorization);
   if (!authorization || !authorization.startsWith("Bearer")) {
     return res
       .status(ERROR_CODES.AUTHORIZATION_ERROR)
