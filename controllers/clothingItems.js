@@ -23,11 +23,13 @@ const deleteItem = (req, res) => {
     .orFail()
     .then((item) => {
       if (String(item.owner) !== req.user._id) {
-        return res 
+        return res
           .status(ERROR_CODES.FORBIDDEN)
-          .send({message: ERROR_MESSAGES.FORBIDDEN})
+          .send({ message: ERROR_MESSAGES.FORBIDDEN });
       }
-      return item.deleteOne().then(()=> res.status(200).send({ message: "Successfully deleted" }));
+      return item
+        .deleteOne()
+        .then(() => res.status(200).send({ message: "Successfully deleted" }));
     })
     .catch((err) => {
       console.error(err);

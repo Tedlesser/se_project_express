@@ -16,6 +16,8 @@ mongoose
 
 const app = express();
 
+app.use(cors())
+
 // Main router
 app.use(express.json());
 app.use("/", userRouter);
@@ -24,4 +26,3 @@ app.listen (PORT, () => {
     console.log(`server is running on port ${PORT}`);
 })
 
-app.use(cors())
