@@ -4,22 +4,22 @@ const bcrypt = require("bcrypt");
 const User = require("../models/user");
 const { ERROR_CODES, ERROR_MESSAGES } = require("../utils/errors");
 const { JWT_SECRET } = require("../utils/config");
+const { BadRequestError } = require("../utils/BadRequestError");
+const { UnauthorizedError } = require("../utils/UnauthorizedError");
+const { NotFoundError } = require("../utils/NotFoundError");
+const { ConflictError } = require("../utils/ConflictError");
 
-const createUser = async (req, res) => {
+const createUser = async (req, res, next) => {
   const { name, avatar, email, password } = req.body;
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   if (!email || !password) {
-    return res
-      .status(ERROR_CODES.BAD_REQUEST)
-      .send({ message: ERROR_MESSAGES.BAD_REQUEST });
+    return next(new BadRequestError("Incorrect email or password"));
   }
 
   if (!emailRegex.test(email)) {
-    return res
-      .status(ERROR_CODES.BAD_REQUEST)
-      .send({ message: "Invalid email format" });
+    return next(new BadRequestError("Invalid email format"));
   }
 
   try {
@@ -27,9 +27,7 @@ const createUser = async (req, res) => {
     const existingUser = await User.findOne({ email });
 
     if (existingUser) {
-      return res
-        .status(ERROR_CODES.DUPLICATE_EMAIL_EXISTS)
-        .send({ message: ERROR_MESSAGES.DUPLICATE_EMAIL_EXISTS });
+      return next(new ConflictError("Email already exists"));
     }
 
     // Hash the password
@@ -42,26 +40,24 @@ const createUser = async (req, res) => {
       email,
       password: hashPassword,
     });
-    console.log(newUser);
+
     return res.status(201).send({ name, avatar, email });
   } catch (err) {
     console.error(err);
     if (err.name === "ValidationError") {
-      return res
-        .status(ERROR_CODES.BAD_REQUEST)
-        .send({ message: ERROR_MESSAGES.BAD_REQUEST });
+      next(new BadRequestError("Invalid data"));
+    } else if (err.name === "MongoServerError" || err.code === 11001) {
+      next(new ConflictError(err.message));
+    } else {
+      next(err);
     }
-  
-    // Handle server error
-    return res
-      .status(ERROR_CODES.SERVER_ERROR)
-      .send({ message: ERROR_MESSAGES.SERVER_ERROR });
   }
 };
 
-const getCurrentUser = (req, res) => {
+const getCurrentUser = (req, res, next) => {
   // the id comes from req.user._id
   const userId = req.user._id;
+
   User.findById(userId)
     .select("-password")
     .orFail()
@@ -69,29 +65,22 @@ const getCurrentUser = (req, res) => {
       res.status(200).send(user);
     })
     .catch((err) => {
-      if (err.name === "CastError") {
-        return res
-          .status(ERROR_CODES.BAD_REQUEST)
-          .send({ message: ERROR_MESSAGES.BAD_REQUEST });
-      }
+      console.error(err);
       if (err.name === "DocumentNotFoundError") {
-        return res
-          .status(ERROR_CODES.NOT_FOUND)
-          .send({ message: ERROR_MESSAGES.NOT_FOUND });
+        next(new NotFoundError("No user with matching ID found"));
+      } else if (err.name === "CastError") {
+        next(new BadRequestError("The name string is in an invalid format"));
+      } else {
+        next(err);
       }
-      return res
-        .status(ERROR_CODES.SERVER_ERROR)
-        .send({ message: ERROR_MESSAGES.SERVER_ERROR });
     });
 };
 
-const login = async (req, res) => {
+const login = async (req, res, next) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    return res
-      .status(ERROR_CODES.BAD_REQUEST)
-      .send({ message: ERROR_MESSAGES.BAD_REQUEST });
+    return next(new BadRequestError("Incorrect email or password"));
   }
 
   if (!validator.isEmail(email)) {
@@ -105,57 +94,43 @@ const login = async (req, res) => {
     const token = jwt.sign({ _id: user._id }, JWT_SECRET, {
       expiresIn: "7d",
     });
-    console.log(user);
-    console.log(token);
+
     return res.status(200).send({ token });
   } catch (err) {
-    console.log(err);
-    // console.error(`Error during login: ${err.message}`);
+    console.error(err);
     if (err.message === "Incorrect email or password") {
-      return res
-        .status(ERROR_CODES.AUTHORIZATION_ERROR)
-        .send({ message: ERROR_MESSAGES.AUTHORIZATION_ERROR });
+      next(new UnauthorizedError("Incorrect email or password"));
+    } else {
+      next(err);
     }
-    return res
-      .status(ERROR_CODES.SERVER_ERROR)
-      .send({ message: ERROR_MESSAGES.SERVER_ERROR });
   }
 };
 
 const updateUser = (req, res) => {
   const userId = req.user._id;
   const { name, avatar } = req.body;
-  console.log(userId)
+  console.log(userId);
 
   const updates = {};
   if (name) updates.name = name;
   if (avatar) updates.avatar = avatar;
-  
+
   User.findByIdAndUpdate(userId, updates, { new: true, runValidators: true })
     .then((user) => {
       if (!user) {
-        return res.status(ERROR_CODES.NOT_FOUND).json({
-          status: "error",
-          message: ERROR_MESSAGES.NOT_FOUND,
-        });
+        throw new NotFoundError("No user with matching ID found");
       }
       return res.status(200).json({
         data: user,
       });
     })
     .catch((err) => {
+      console.error(err);
       if (err.name === "ValidationError") {
-        return res.status(ERROR_CODES.BAD_REQUEST).json({
-          status: "error",
-          message: "Validation Error",
-          errors: err.errors,
-        });
+        next(new BadRequestError("The name string is in an invalid format"));
+      } else {
+        next(err);
       }
-      return res.status(ERROR_CODES.SERVER_ERROR).json({
-        status: "error",
-        message: ERROR_MESSAGES.SERVER_ERROR,
-      });
     });
 };
-
 module.exports = { createUser, login, getCurrentUser, updateUser };

@@ -1,7 +1,10 @@
 const clothingItem = require("../models/clothingItem");
 const { ERROR_CODES, ERROR_MESSAGES } = require("../utils/errors");
+const { BadRequestError } = require("../utils/BadRequestError");
+const { NotFoundError } = require("../utils/NotFoundError");
 
-const getItems = (req, res) => {
+
+const getItems = (req, res, next) => {
   clothingItem
     .find({})
     .then((items) => {
@@ -9,13 +12,11 @@ const getItems = (req, res) => {
     })
     .catch((err) => {
       console.error(err);
-      res
-        .status(ERROR_CODES.SERVER_ERROR)
-        .send({ message: ERROR_MESSAGES.SERVER_ERROR });
+      return next(err);
     });
 };
 
-const deleteItem = (req, res) => {
+const deleteItem = (req, res, next) => {
   const { itemId } = req.params;
 
   clothingItem
@@ -33,23 +34,17 @@ const deleteItem = (req, res) => {
     })
     .catch((err) => {
       console.error(err);
-      if (err.name === "DocumentNotFoundError") {
-        return res
-          .status(ERROR_CODES.NOT_FOUND)
-          .send({ message: ERROR_MESSAGES.NOT_FOUND });
-      }
       if (err.name === "CastError") {
-        return res
-          .status(ERROR_CODES.BAD_REQUEST)
-          .send({ message: ERROR_MESSAGES.BAD_REQUEST });
+        next(new BadRequestError("Invalid data"));
+      } else if (err.name === "DocumentNotFoundError") {
+        next(new NotFoundError("No Requested resource"));
+      } else {
+        next(err);
       }
-      return res
-        .status(ERROR_CODES.SERVER_ERROR)
-        .send({ message: ERROR_MESSAGES.SERVER_ERROR });
     });
 };
 
-const addItem = (req, res) => {
+const addItem = (req, res, next) => {
   const { name, weather, imageUrl } = req.body;
   const owner = req.user._id;
 
@@ -64,17 +59,13 @@ const addItem = (req, res) => {
     .then((item) => res.status(201).send(item))
     .catch((err) => {
       if (err.name === "ValidationError") {
-        return res
-          .status(ERROR_CODES.BAD_REQUEST)
-          .send({ message: ERROR_MESSAGES.BAD_REQUEST });
+        return next(new BadRequestError("Invalid data"));
       }
-      return res
-        .status(ERROR_CODES.SERVER_ERROR)
-        .send({ message: ERROR_MESSAGES.SERVER_ERROR });
+      return next(err);
     });
 };
 
-const likeItem = (req, res) => {
+const likeItem = (req, res, next) => {
   clothingItem
     .findByIdAndUpdate(
       req.params.itemId,
@@ -85,22 +76,17 @@ const likeItem = (req, res) => {
     .then((item) => res.json(item))
     .catch((err) => {
       console.error(err);
-      if (err.name === "DocumentNotFoundError")
-        return res
-          .status(ERROR_CODES.NOT_FOUND)
-          .json({ message: ERROR_MESSAGES.NOT_FOUND });
-      if (err.name === "CastError") {
-        return res
-          .status(ERROR_CODES.BAD_REQUEST)
-          .send({ message: ERROR_MESSAGES.BAD_REQUEST });
+      if (err.name === "DocumentNotFoundError") {
+        next(new NotFoundError("No requested resource"));
+      } else if (err.name === "CastError") {
+        next(new BadRequestError("Invalid data"));
+      } else {
+        next(err);
       }
-      return res
-        .status(ERROR_CODES.SERVER_ERROR)
-        .json({ message: ERROR_MESSAGES.SERVER_ERROR });
     });
 };
 
-const dislikeItem = (req, res) => {
+const dislikeItem = (req, res, next) => {
   clothingItem
     .findByIdAndUpdate(
       req.params.itemId,
@@ -111,18 +97,13 @@ const dislikeItem = (req, res) => {
     .then((item) => res.send(item))
     .catch((err) => {
       console.error(err);
-      if (err.name === "DocumentNotFoundError")
-        return res
-          .status(ERROR_CODES.NOT_FOUND)
-          .json({ message: ERROR_MESSAGES.NOT_FOUND });
-      if (err.name === "CastError") {
-        return res
-          .status(ERROR_CODES.BAD_REQUEST)
-          .send({ message: ERROR_MESSAGES.BAD_REQUEST });
+      if (err.name === "DocumentNotFoundError") {
+        next(new NotFoundError("No requested resource"));
+      } else if (err.name === "CastError") {
+        next(new BadRequestError("Invalid data"));
+      } else {
+        next(err);
       }
-      return res
-        .status(ERROR_CODES.SERVER_ERROR)
-        .send({ message: ERROR_MESSAGES.SERVER_ERROR });
     });
 };
 
