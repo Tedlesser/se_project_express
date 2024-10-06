@@ -1,11 +1,11 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors")
-const userRouter = require("./routes/index");
 const { errors } = require('celebrate');
 const mainRouter = require("./routes/index");
-const { errorHandler } = require("./middlewares/error-handler");
-const { requestLogger, errorLogger } = require('./middlewares/logger');
+const { errorHandler } = require("./middleware/error-handler");
+const { requestLogger, errorLogger } = require('./middleware/logger');
+require('dotenv').config();
 
 const { PORT = 3001} = process.env; 
 
@@ -23,9 +23,8 @@ app.use(cors())
 
 // Main router
 app.use(express.json());
-app.use("/", userRouter);
 app.use(requestLogger);
-app.use(routes);
+app.use("/", mainRouter);
 
 app.use(errorLogger)
 
