@@ -1,8 +1,7 @@
 const clothingItem = require("../models/clothingItem");
-const { ERROR_CODES, ERROR_MESSAGES } = require("../utils/errors");
 const { BadRequestError } = require("../utils/BadRequestError");
 const { NotFoundError } = require("../utils/NotFoundError");
-
+const { ForbiddenError } = require("../utils/ForbiddenError");
 
 const getItems = (req, res, next) => {
   clothingItem
@@ -24,9 +23,7 @@ const deleteItem = (req, res, next) => {
     .orFail()
     .then((item) => {
       if (String(item.owner) !== req.user._id) {
-        return res
-          .status(ERROR_CODES.FORBIDDEN)
-          .send({ message: ERROR_MESSAGES.FORBIDDEN });
+        throw new ForbiddenError("This is a permissions issue. The user is trying to remove the card of another user.")
       }
       return item
         .deleteOne()
@@ -49,9 +46,7 @@ const addItem = (req, res, next) => {
   const owner = req.user._id;
 
   if (!name || !weather || !imageUrl) {
-    return res
-      .status(ERROR_CODES.BAD_REQUEST)
-      .send({ message: ERROR_MESSAGES.BAD_REQUEST });
+    throw BadRequestError("Invalid data")
   }
 
   return clothingItem
