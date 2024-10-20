@@ -2,7 +2,6 @@ const jwt = require("jsonwebtoken");
 const validator = require("validator");
 const bcrypt = require("bcrypt");
 const User = require("../models/user");
-const { ERROR_CODES, ERROR_MESSAGES } = require("../utils/errors");
 const { JWT_SECRET } = require("../utils/config");
 const { BadRequestError } = require("../utils/BadRequestError");
 const { UnauthorizedError } = require("../utils/UnauthorizedError");
@@ -80,13 +79,11 @@ const login = async (req, res, next) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    return next(new BadRequestError("Incorrect email or password"));
+    return next(new BadRequestError("The name string is in an invalid format"));
   }
 
   if (!validator.isEmail(email)) {
-    return res
-      .status(ERROR_CODES.BAD_REQUEST)
-      .send({ message: "Invalid email format" });
+    return next(new BadRequestError("No user with matching ID found"));
   }
 
   try {
@@ -101,10 +98,11 @@ const login = async (req, res, next) => {
     if (err.message === "Incorrect email or password") {
       next(new UnauthorizedError("Incorrect email or password"));
     } else {
-      next(err);
+      next(err); // Ensure a return statement here
     }
   }
 };
+
 
 const updateUser = (req, res) => {
   const userId = req.user._id;
@@ -124,7 +122,7 @@ const updateUser = (req, res) => {
         data: user,
       });
     })
-    .catch((err) => {
+    .catch((err, next) => {
       console.error(err);
       if (err.name === "ValidationError") {
         next(new BadRequestError("The name string is in an invalid format"));
