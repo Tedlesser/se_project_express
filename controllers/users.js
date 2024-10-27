@@ -33,7 +33,7 @@ const createUser = async (req, res, next) => {
     const hashPassword = await bcrypt.hash(password, 10);
 
     // Create the user with hashed password
-    const newUser = await User.create({
+    await User.create({
       name,
       avatar,
       email,
@@ -44,12 +44,12 @@ const createUser = async (req, res, next) => {
   } catch (err) {
     console.error(err);
     if (err.name === "ValidationError") {
-      next(new BadRequestError("Invalid data"));
-    } else if (err.name === "MongoServerError" || err.code === 11001) {
-      next(new ConflictError(err.message));
-    } else {
-      next(err);
+      return next(new BadRequestError("Invalid data"));
     }
+    if (err.name === "MongoServerError" || err.code === 11001) {
+      return next(new ConflictError(err.message));
+    }
+    return next(err);
   }
 };
 
@@ -96,13 +96,11 @@ const login = async (req, res, next) => {
   } catch (err) {
     console.error(err);
     if (err.message === "Incorrect email or password") {
-      next(new UnauthorizedError("Incorrect email or password"));
-    } else {
-      next(err); // Ensure a return statement here
+      return next(new UnauthorizedError("Incorrect email or password"));
     }
+    return next(err); // Ensure a return statement here
   }
 };
-
 
 const updateUser = (req, res) => {
   const userId = req.user._id;
