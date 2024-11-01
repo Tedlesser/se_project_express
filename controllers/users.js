@@ -102,7 +102,7 @@ const login = async (req, res, next) => {
   }
 };
 
-const updateUser = (req, res) => {
+const updateUser = (req, res, next) => {
   const userId = req.user._id;
   const { name, avatar } = req.body;
   console.log(userId);
@@ -120,7 +120,7 @@ const updateUser = (req, res) => {
         data: user,
       });
     })
-    .catch((err, next) => {
+    .catch((err ) => {
       console.error(err);
       if (err.name === "ValidationError") {
         next(new BadRequestError("The name string is in an invalid format"));
